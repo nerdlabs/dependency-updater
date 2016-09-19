@@ -9,31 +9,99 @@ exports.handler = function(event, context, callback) {
 async function updateDependencies() {
   const github = new GitHub();
 
-  // XXX: this is static at the moment, later it will of course be configurable
-  // TODO: do we want to check multiple file paths (mono-repo)?
-  // TODO: do we want to check multiple repositories per invocation?
-  const result = await github.repos.getContent({
-    user: 'nerdlabs',
-    repo: 'react-amp-layout',
-    path: 'package.json'
+  github.authenticate({
+    type: "basic",
+    username: '<user with write access to repository>',
+    password: '<password>'
   });
 
-  const {encoding = 'base64', content} = result;
+  const repoConfig = {
+    user: 'nerdlabs',
+    repo: 'react-amp-layout',
+  };
+
+  const filePath = 'package.json';
+
+  const {default_branch} = await github.repos.get(repoConfig);
+
+  const {sha: latestCommitSha} = await github.repos.getShaOfCommitRef({
+    ...repoConfig,
+    ref: default_branch,
+  });
+
+  const {encoding, content, sha: parentSha} = await github.repos.getContent({
+    ...repoConfig,
+    path: filePath,
+    ref: default_branch,
+  });
+
   const fileContent = new Buffer(content, encoding).toString('utf-8');
-  const data = JSON.parse(fileContent);
-  const updatedDependencies = await getUpdatedDependencies(data);
+  const manifest = JSON.parse(fileContent);
 
-  // for every updated dependency:
-  // - check whether a PR for this update already exists: https://mikedeboer.github.io/node-github/#api-pullRequests-getAll
-  // - update version number in package.json
-  // - create a new branch: https://mikedeboer.github.io/node-github/#api-gitdata-createReference
-  // - update the package.json file in the newly created branch: https://mikedeboer.github.io/node-github/#api-repos-updateFile
-  // - create a new pull request: https://mikedeboer.github.io/node-github/#api-pullRequests-create
+  const updatedDependencies = await getUpdatedDependencies(
+    manifest,
+    'dependencies'
+  );
 
-  return updatedDependencies;
+  const updatedDevDependencies = await getUpdatedDependencies(
+    manifest,
+    'devDependencies'
+  );
+
+  function updateManifest(manifest, type, {name, latest}) {
+    return {
+      ...manifest,
+      [type]: {
+        ...manifest[type],
+        [name]: latest,
+      },
+    };
+  }
+
+  async function updateDepedency(manifest, name, version, base, head, parent) {
+    await github.gitdata.createReference({
+      ...repoConfig,
+      sha: head,
+      ref: `refs/heads/update-${name}-${version}`,
+    });
+
+    await github.repos.updateFile({
+      ...repoConfig,
+      path: filePath,
+      message: `update ${name} to version ${version}`,
+      content: new Buffer(JSON.stringify(manifest, null, 2)).toString('base64'),
+      sha: parent,
+      branch: `update-${name}-${version}`,
+    });
+
+    await github.pullRequests.create({
+      ...repoConfig,
+      title: `update ${name} to version ${version}`,
+      head: `update-${name}-${version}`,
+      base: base,
+    });
+  }
+
+  const newManifest = updateManifest(
+    manifest,
+    'devDependencies',
+    updatedDevDependencies[0]
+  );
+
+  await updateDepedency(
+    newManifest,
+    updatedDevDependencies[0].name,
+    updatedDevDependencies[0].latest,
+    default_branch,
+    latestCommitSha,
+    parentSha
+  );
+
+  return [...updatedDependencies, ...updatedDevDependencies];
 }
 
 // TODO: extract into its own file
+import semver from 'semver';
 import RegistryClient from 'npm-registry-client';
 
 const noop = () => {};
@@ -61,28 +129,20 @@ function getPackage(name) {
   });
 }
 
-// TODO: extract into its own file
-import semver from 'semver';
+async function getUpdatedDependencies(manifest, type) {
+  const depedencies = manifest[type] || {};
 
-async function getUpdatedDependencies(manifest) {
-  // XXX: are there any other *Dependencies that we should include?
-  const {dependencies = {}, devDependencies = {}} = manifest;
-  const allDependencies = {...dependencies, ...devDependencies};
-
-  const packages = await Promise.all(
-    Object.keys(allDependencies).map(getPackage)
-  );
+  const packages = await Promise.all(Object.keys(depedencies).map(getPackage));
 
   const latestVersions = packages.map((manifest) => ({
     name: manifest.name,
-    // XXX: should we also check for other dist-tags?
-    latest: manifest['dist-tags'].latest
+    latest: manifest['dist-tags'].latest,
   }));
 
   return latestVersions.filter(({name, latest}) => {
-    const current = allDependencies[name];
-    // XXX: maybe also verify that this update would not already be covered by the
-    // current semver range to reduce the amount of unneccessary PRs
-    return semver.gt(latest, current);
+    const current = depedencies[name];
+    const isCoveredByRange = semver.satisfies(latest, current);
+
+    return !isCoveredByRange && semver.gt(latest, current);
   });
 }
