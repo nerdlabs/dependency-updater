@@ -1,0 +1,86 @@
+{
+  "name": "get-github-file",
+  "version": "1.0.0",
+  "description": "Get a file from a github repository",
+  "main": "distribution/index.js",
+  "scripts": {
+    "start": "npm run test -- --watch",
+    "clean": "rm -rf distribution",
+    "prebuild": "npm run clean",
+    "build": "babel source/ --out-dir distribution/",
+    "flow": "flow; test $? -eq 0 -o $? -eq 2",
+    "pretest": "npm run flow",
+    "test": "xo source/ && ava",
+    "update": "tipi update",
+    "prepublish": "npm run build"
+  },
+  "tipi": {
+    "version": "1.0.0",
+    "template": "node"
+  },
+  "ava": {
+    "babel": "inherit",
+    "files": [
+      "source/**/*.spec.js"
+    ],
+    "require": [
+      "babel-register"
+    ],
+    "source": [
+      "source/**/*.js",
+      "!source/**/*.spec.js"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "es2015-node4",
+      "stage-2"
+    ],
+    "plugins": [
+      "transform-flow-strip-types"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nerdlabs/get-github-file.git"
+  },
+  "keywords": [
+    "github",
+    "file"
+  ],
+  "author": {
+    "name": "nerdlabs",
+    "email": "nerds@nerdlabs.it"
+  },
+  "contributors": [
+    {
+      "name": "Mario Nebl",
+      "email": "hello@herebecode.com"
+    },
+    {
+      "name": "Bjoern Brauer",
+      "email": "zaubernerd@zaubernerd.de"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nerdlabs/get-github-file/issues"
+  },
+  "homepage": "https://github.com/nerdlabs/get-github-file#readme",
+  "devDependencies": {
+    "ava": "0.16.0",
+    "babel-cli": "^6.14.0",
+    "babel-plugin-transform-flow-strip-types": "^6.14.0",
+    "babel-preset-es2015-node4": "^2.1.0",
+    "babel-preset-stage-2": "^6.13.0",
+    "babel-register": "^6.14.0",
+    "flow-bin": "^0.32.0",
+    "sinon": "^1.17.6",
+    "sinon-stub-promise": "^3.0.1",
+    "tipi-cli": "1.0.0",
+    "xo": "0.16.0"
+  },
+  "dependencies": {
+    "github": "^3.1.0"
+  }
+}

@@ -1,0 +1,18 @@
+declare module "github" {
+	declare type RepoGetResponse = {
+		default_branch: string;
+	};
+
+	declare type RepoContentResponse = {
+		content: string;
+		encoding: buffer$Encoding;
+	};
+
+	declare export default class Github {
+		authenticate(): void;
+		repos: {
+			get(): Promise<RepoGetResponse>,
+			getContent(): Promise<RepoContentResponse>
+		}
+	}
+}

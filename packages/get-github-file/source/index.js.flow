@@ -1,0 +1,32 @@
+// @flow
+
+declare type Basic = {
+	type: "basic";
+	username: string;
+	password: string;
+};
+
+declare type OAuthWithToken = {
+	type: "oauth";
+	token: string;
+};
+
+declare type OAuthWithSecret = {
+	type: "oauth";
+	key: string;
+	secret: string;
+};
+
+declare type Auth = Basic | OAuthWithToken | OAuthWithSecret;
+
+declare type Github = any;
+
+export type Uri = string;
+
+export type Options = {
+	auth?: Auth;
+	branch?: string;
+	client?: Github;
+};
+
+declare export default function getGithubFile(uri: Uri, options?: Options): Promise<Buffer>;
