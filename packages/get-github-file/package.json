@@ -5,14 +5,12 @@
   "main": "distribution/index.js",
   "scripts": {
     "start": "npm run test -- --watch",
-    "clean": "rm -rf distribution",
-    "prebuild": "npm run clean",
     "build": "babel source/ --out-dir distribution/",
     "flow": "flow; test $? -eq 0 -o $? -eq 2",
     "pretest": "npm run flow",
     "test": "xo source/ && ava",
     "update": "tipi update",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build && cp source/*.js.flow distribution"
   },
   "tipi": {
     "version": "1.0.0",
