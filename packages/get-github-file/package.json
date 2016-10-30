@@ -1,6 +1,6 @@
 {
   "name": "get-github-file",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Get a file from a github repository",
   "main": "distribution/index.js",
   "scripts": {
