@@ -76,6 +76,7 @@
     "sinon": "^1.17.6",
     "sinon-stub-promise": "^3.0.1",
     "tipi-cli": "1.0.0",
+    "travis-after-all": "^1.4.4",
     "xo": "0.16.0"
   },
   "dependencies": {
