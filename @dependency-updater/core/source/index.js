@@ -86,5 +86,14 @@ async function getLatestVersions(dependencies) {
 		.filter(({ name, current, latest }) => {
 			return Boolean(semver.validRange(current)) &&
 				!semver.satisfies(latest, current);
+		})
+		.map(dependency => {
+			if (dependency.current.startsWith('~')) {
+				dependency.latest = `~${dependency.latest}`;
+			}
+			if (dependency.current.startsWith('^')) {
+				dependency.latest = `^${dependency.latest}`;
+			}
+			return dependency;
 		});
 }
