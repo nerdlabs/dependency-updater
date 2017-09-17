@@ -76,17 +76,15 @@ async function updateDependencies(manifest, { dependencies, devDependencies }) {
 }
 
 async function getLatestVersions(dependencies) {
-	const latestVersions = await Promise.all(
+	return (await Promise.all(
 		Object.keys(dependencies).map(async (name) => ({
 			name,
+			current: dependencies[name],
 			latest: await latestVersion(name)
 		}))
-	);
-
-	return latestVersions.filter(({ name, latest }) => {
-		const current = dependencies[name];
-		const isCoveredByRange = semver.satisfies(latest, current);
-
-		return !isCoveredByRange;
-	});
+	))
+		.filter(({ name, current, latest }) => {
+			return Boolean(semver.validRange(current)) &&
+				!semver.satisfies(latest, current);
+		});
 }
