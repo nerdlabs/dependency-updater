@@ -7,8 +7,33 @@
     "clean": "rm -rf distribution",
     "prebuild": "npm run clean",
     "build": "babel source/ -d distribution/",
-    "postbuild": "npm ls --prod=true --parseable=true | sed -e s\\%`pwd`/%% | tail -n +2 | zip -r distribution/lambda.zip distribution package.json -@",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "#postbuild": "npm ls --prod=true --parseable=true | sed -e s\\%`pwd`/%% | tail -n +2 | zip -r distribution/lambda.zip distribution package.json -@",
+    "test": "ava"
+  },
+  "ava": {
+    "babel": "inherit",
+    "files": [
+      "source/**/*.spec.js"
+    ],
+    "require": [
+      "babel-register"
+    ],
+    "source": [
+      "source/**/*.js",
+      "!source/**/*.spec.js"
+    ]
+  },
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "6"
+          }
+        }
+      ]
+    ]
   },
   "author": {
     "name": "nerdlabs",
@@ -26,9 +51,10 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "ava": "^0.22.0",
     "babel-cli": "^6.14.0",
-    "babel-preset-es2015-node4": "^2.1.0",
-    "babel-preset-stage-0": "^6.5.0"
+    "babel-preset-env": "^1.6.0",
+    "babel-register": "^6.26.0"
   },
   "dependencies": {
     "@dependency-updater/create-pr": "^1.0.0",
@@ -36,6 +62,7 @@
     "github": "^3.1.0",
     "latest-version": "^2.0.0",
     "npm-registry-client": "^7.2.1",
+    "parse-json": "^3.0.0",
     "semver": "^5.3.0",
     "unindent": "^2.0.0"
   }

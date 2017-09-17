@@ -1,74 +1,92 @@
 import unindent from 'unindent';
-import getGithubFile from 'get-github-file';
-import createGithubPullRequest from 'create-github-pull-request';
-
-exports.handler = function (event, context, callback) {
-  updateDependencies()
-    .then((result) => callback(null, result))
-    .catch(callback);
-};
-
-async function updateDependencies() {
-  const auth = {
-    type: 'basic',
-    username: '',
-    password: ''
-  };
-
-  const uri = `nerdlabs/react-amp-layout/package.json`;
-  const content = await getGithubFile(uri, { auth });
-  const manifest = JSON.parse(content.toString('utf-8'));
-
-  await Promise.all(['dependencies', 'devDependencies'].map(async (type) => {
-    const dependencies = Object.keys(manifest[type] || {});
-    const latestVersions = await getLatestVersions(dependencies);
-
-    return Promise.all(latestVersions.map((updatedDepedency) => {
-      const newManifest = updateManifest(manifest, type, updatedDepedency);
-
-      const message = unindent(`
-        Update ${updatedDepedency.name} to ${updatedDepedency.latest}
-      `);
-
-      return createGithubPullRequest(
-        uri,
-        new Buffer(newManifest),
-        {
-          auth,
-          message,
-          prBranch: `update-${updatedDepedency.name}-${updatedDepedency.latest}`
-        }
-      );
-    }));
-  }));
-}
-
-function updateManifest(manifest, type, { name, latest }) {
-  return JSON.stringify({
-    ...manifest,
-    [type]: {
-      ...manifest[type],
-      [name]: latest,
-    },
-  }, null, 2);
-}
-
-// TODO: extract into its own file
+import getGithubFile from '@dependency-updater/get-file';
+import createGithubPullRequest from '@dependency-updater/create-pr';
 import semver from 'semver';
 import latestVersion from 'latest-version';
+import Github from 'github';
+import parseJson from 'parse-json';
+import getManifests from './get-manifests';
+
+exports.handler = function (event, context, callback) {
+	main({
+		auth: {
+			type: 'basic',
+			username: process.env.GITHUB_USER_NAME,
+			password: process.env.GITHUB_PASSWORD,
+		},
+		user: process.env.GITHUB_REPO_OWNER,
+		repo: process.env.GITHUB_REPO_NAME,
+	})
+		.then((result) => callback(null, result))
+		.catch(callback);
+};
+
+
+async function main({ auth, user, repo }) {
+	const client = new Github();
+	client.authenticate(auth);
+	const manifests = await Promise.all(
+		(await getManifests(client, user, repo))
+			.map(({ path }) => {
+				const file = getGithubFile(`${user}/${repo}/${path}`, { client })
+				return { path, file };
+			})
+			.map(async ({ path, file }) => {
+				const content = parseJson((await file).toString('utf-8'))
+				return { path, content };
+			})
+
+	);
+
+	await Promise.all(manifests.map(async ({ path, content: manifest }) => {
+		const updates = await getUpdates(manifest);
+		if (!updates.dependencies.length && !updates.devDependencies.length) {
+			return;
+		}
+		const newManifest = await updateDependencies(manifest, updates);
+		const message = 'Update dependencies';
+		console.log(newManifest);
+		// return createGithubPullRequest(
+		// 	`${user}/${repo}/${path}`,
+		// 	new Buffer(newManifest),
+		// 	{ client, message }
+		// );
+	}));
+}
+
+async function getUpdates(manifest) {
+	const { dependencies = {}, devDependencies = {} } = manifest;
+	const latestDependencies = await getLatestVersions(dependencies);
+	const latestDevDependencies = await getLatestVersions(devDependencies);
+	return {
+		dependencies: latestDependencies,
+		devDependencies: latestDevDependencies,
+	};
+}
+
+async function updateDependencies(manifest, { dependencies, devDependencies }) {
+	dependencies.forEach(({ name, latest }) => {
+		manifest.dependencies[name] = latest;
+	});
+	devDependencies.forEach(({ name, latest }) => {
+		manifest.devDependencies[name] = latest;
+	});
+
+	return JSON.stringify(manifest, null, 2);
+}
 
 async function getLatestVersions(dependencies) {
-  const latestVersions = await Promise.all(
-    dependencies.map(async (name) => ({
-      name,
-      latest: await latestVersion(name)
-    }))
-  );
+	const latestVersions = await Promise.all(
+		Object.keys(dependencies).map(async (name) => ({
+			name,
+			latest: await latestVersion(name)
+		}))
+	);
 
-  return latestVersions.filter(({ name, latest }) => {
-    const current = depedencies[name];
-    const isCoveredByRange = semver.satisfies(latest, current);
+	return latestVersions.filter(({ name, latest }) => {
+		const current = dependencies[name];
+		const isCoveredByRange = semver.satisfies(latest, current);
 
-    return !isCoveredByRange && semver.gt(latest, current);
-  });
+		return !isCoveredByRange;
+	});
 }
