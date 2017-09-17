@@ -4,10 +4,12 @@
   "description": "Update a file on github and create a pull request for it",
   "main": "distribution/index.js",
   "scripts": {
-    "start": "npm run test -- --watch",
+    "clean": "rm -rf distribution",
+    "prebuild": "npm run clean",
     "build": "babel source/ --out-dir distribution/",
-    "pretest": "xo source/",
-    "test": "ava"
+    "build:watch": "npm run build -- --watch",
+    "test": "ava",
+    "test:watch": "npm run test -- --watch"
   },
   "ava": {
     "babel": "inherit",
@@ -18,7 +20,8 @@
       "babel-register"
     ],
     "source": [
-      "source/**/*.js"
+      "source/**/*.js",
+      "!source/**/*.spec.js"
     ]
   },
   "babel": {
@@ -32,7 +35,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nerdlabs/create-github-pull-request.git"
+    "url": "git+https://github.com/nerdlabs/dependency-updater.git"
   },
   "keywords": [
     "github",
@@ -54,18 +57,16 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nerdlabs/create-github-pull-request/issues"
+    "url": "https://github.com/nerdlabs/dependency-updater/issues"
   },
-  "homepage": "https://github.com/nerdlabs/create-github-pull-request#readme",
+  "homepage": "https://github.com/nerdlabs/dependency-updater/tree/master/%40dependency-updater/create-pr#readme",
   "devDependencies": {
     "ava": "0.16.0",
     "babel-cli": "^6.14.0",
     "babel-preset-env": "^1.6.0",
-    "babel-preset-stage-2": "^6.13.0",
     "babel-register": "^6.14.0",
     "sinon": "^1.17.6",
-    "sinon-stub-promise": "^3.0.1",
-    "xo": "0.16.0"
+    "sinon-stub-promise": "^3.0.1"
   },
   "dependencies": {
     "github": "^3.1.0"

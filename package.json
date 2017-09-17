@@ -2,14 +2,47 @@
   "name": "dependency-updater",
   "version": "1.0.0",
   "private": true,
-  "repository": "git@github.com:nerdlabs/dependency-updater.git",
-  "author": "ZauberNerd <zaubernerd@zaubernerd.de>",
-  "license": "MIT",
+  "scripts": {
+    "fmt": "prettier --write --single-quote --trailing-comma=all --tab-width=4 '@dependency-updater/**/*.js'",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --write --single-quote --trailing-comma=all --tab-width=4",
+      "git add"
+    ]
+  },
   "workspaces": [
     "@dependency-updater/*"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nerdlabs/dependency-updater.git"
+  },
+  "author": {
+    "name": "nerdlabs",
+    "email": "nerds@nerdlabs.it"
+  },
+  "contributors": [
+    {
+      "name": "Mario Nebl",
+      "email": "hello@herebecode.com"
+    },
+    {
+      "name": "Bjoern Brauer",
+      "email": "zaubernerd@zaubernerd.de"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nerdlabs/dependency-updater/issues"
+  },
+  "homepage": "https://github.com/nerdlabs/dependency-updater#readme",
   "devDependencies": {
+    "husky": "^0.14.3",
     "lerna": "^2.2.0",
+    "lint-staged": "^4.2.1",
+    "prettier": "^1.7.0",
     "yarn": "^1.0.2"
   }
 }
