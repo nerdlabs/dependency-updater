@@ -1,5 +1,5 @@
 {
-  "name": "dependency-updater",
+  "name": "@dependency-updater/core",
   "version": "1.0.0",
   "description": "",
   "main": "distribution/index.js",
@@ -31,8 +31,8 @@
     "babel-preset-stage-0": "^6.5.0"
   },
   "dependencies": {
-    "create-github-pull-request": "file:create-github-pull-request-1.0.0.tgz",
-    "get-github-file": "file:get-github-file-1.0.1.tgz",
+    "@dependency-updater/create-pr": "^1.0.0",
+    "@dependency-updater/get-file": "^1.0.0",
     "github": "^3.1.0",
     "latest-version": "^2.0.0",
     "npm-registry-client": "^7.2.1",

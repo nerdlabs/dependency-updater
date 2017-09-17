@@ -1,7 +1,7 @@
 {
   "name": "dependency-updater",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "repository": "git@github.com:nerdlabs/dependency-updater.git",
   "author": "ZauberNerd <zaubernerd@zaubernerd.de>",
   "license": "MIT",
