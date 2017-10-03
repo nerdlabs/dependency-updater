@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "fmt": "prettier --write --single-quote --trailing-comma=all --tab-width=4 '@dependency-updater/**/*.js'",
+    "fmt": "prettier --write --single-quote --trailing-comma=all --tab-width=4 '@dependency-updater/**/!(distribution)/*.js'",
     "precommit": "lint-staged"
   },
   "lint-staged": {
