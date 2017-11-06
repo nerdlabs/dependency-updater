@@ -72,6 +72,6 @@
     "sinon-stub-promise": "^4.0.0"
   },
   "dependencies": {
-    "github": "^11.0.0"
+    "github": "^12.0.1"
   }
 }
