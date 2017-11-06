@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "fmt": "prettier --write --single-quote --trailing-comma=all --tab-width=4 '@dependency-updater/**/!(distribution)/*.js'",
+    "bootstrap": "lerna bootstrap",
+    "build": "lerna run build --parallel",
+    "build:watch": "lerna run build:watch --parallel",
     "precommit": "lint-staged"
   },
   "lint-staged": {
