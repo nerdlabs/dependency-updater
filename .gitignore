@@ -2,3 +2,4 @@ node_modules/
 distribution/
 terraform.tfstate.backup
 *.log
+.setup-env

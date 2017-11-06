@@ -57,47 +57,30 @@ function getBranchName(path) {
     return `update-dependencies-${path === '.' ? 'root' : path}`;
 }
 
-async function getLatestVersions(dependencies) {
-    return (await Promise.all(
+function needsUpdate(current, latest) {
+    return (
+        Boolean(semver.validRange(current)) &&
+        semver.gtr(latest, current) &&
+        !semver.satisfies(latest, current)
+    );
+}
+
+function getSavePrefix(current) {
+    return current.startsWith('^') ? '^' : current.startsWith('~') ? '~' : '';
+}
+
+async function fetchLatestVersions(dependencies, type) {
+    return await Promise.all(
         Object.keys(dependencies).map(async name => {
             try {
-                const current = dependencies[name];
                 const latest = await latestVersion(name);
-                if (
-                    Boolean(semver.validRange(current)) &&
-                    !semver.satisfies(latest, current)
-                ) {
-                    let currentRange = '';
-                    if (current.startsWith('~')) {
-                        currentRange = '~';
-                    }
-                    if (current.startsWith('^')) {
-                        currentRange = '^';
-                    }
-                    return {
-                        name,
-                        current,
-                        latest: `${currentRange}${latest}`,
-                    };
-                }
+                return { name, type, current: dependencies[name], latest };
             } catch (error) {
                 console.warn(error);
             }
-            return null;
+            return [];
         }),
-    )).filter(Boolean);
-}
-
-async function getUpdates(manifest) {
-    const { dependencies = {}, devDependencies = {} } = manifest;
-    const [latestDependencies, latestDevDependencies] = await Promise.all([
-        getLatestVersions(dependencies),
-        getLatestVersions(devDependencies),
-    ]);
-    return [
-        ...latestDependencies.map(x => ((x.type = 'dependencies'), x)),
-        ...latestDevDependencies.map(x => ((x.type = 'devDependencies'), x)),
-    ];
+    );
 }
 
 async function main({ auth, user, repo }) {
@@ -120,13 +103,13 @@ async function main({ auth, user, repo }) {
     const configFiles = tree.filter(matchConfigFile).map(item => item.path);
     const lockFiles = tree.filter(matchLockFile).map(item => item.path);
 
-    function getPackageConfig(path) {
-        const dir = dirname(path);
+    function getPackageConfig(manifestPath) {
+        const path = dirname(manifestPath);
         return {
-            path: dir,
-            manifestPath: path,
-            configFiles: configFiles.filter(matchOnlyParents(dir)),
-            lockFiles: lockFiles.filter(matchOnlyParents(dir)),
+            path,
+            manifestPath,
+            configFiles: configFiles.filter(matchOnlyParents(path)),
+            lockFiles: lockFiles.filter(matchOnlyParents(path)),
         };
     }
 
@@ -134,11 +117,14 @@ async function main({ auth, user, repo }) {
         const branchName = getBranchName(packageConfig.path);
         const headBranch = ourPRs.find(pr => pr.head.ref === branchName);
 
-        return Object.assign({}, packageConfig, {
-            baseBranch: defaultBranch,
-            headBranch: headBranch ? headBranch.head.ref : null,
-            prExists: Boolean(headBranch),
-        });
+        return Object.assign(
+            {
+                baseBranch: defaultBranch,
+                headBranch: headBranch ? headBranch.head.ref : null,
+                prExists: Boolean(headBranch),
+            },
+            packageConfig,
+        );
     }
 
     async function parsePackageFiles(packageConfig) {
@@ -147,19 +133,31 @@ async function main({ auth, user, repo }) {
             client,
             branch: packageConfig.headBranch || packageConfig.baseBranch,
         });
-        return Object.assign({}, packageConfig, {
-            manifest: parseJson(manifest.toString('utf-8')),
-            // TODO: parse npm config
-            // TODO: parse yarn config
-        });
+        return Object.assign(
+            {
+                manifest: parseJson(manifest.toString('utf-8')),
+                // TODO: parse npm config
+                // TODO: parse yarn config
+            },
+            packageConfig,
+        );
     }
 
     async function getPackageUpdates(packageConfigPromise) {
         const packageConfig = await packageConfigPromise;
-        const updates = await getUpdates(packageConfig.manifest);
-        return Object.assign({}, packageConfig, {
-            updates,
-        });
+        const {
+            dependencies = {},
+            devDependencies = {},
+        } = packageConfig.manifest;
+        const [latestDependencies, latestDevDependencies] = await Promise.all([
+            fetchLatestVersions(dependencies, 'dependencies'),
+            fetchLatestVersions(devDependencies, 'devDependencies'),
+        ]);
+        const updates = [
+            ...latestDependencies,
+            ...latestDevDependencies,
+        ].filter(({ current, latest }) => needsUpdate(current, latest));
+        return Object.assign({ updates }, packageConfig);
     }
 
     async function createPRBranches(packageConfigPromise) {
@@ -177,16 +175,16 @@ async function main({ auth, user, repo }) {
                 sha: branchHead,
                 ref: `refs/heads/${headBranch}`,
             });
-            return Object.assign({}, packageConfig, { headBranch });
+            return Object.assign({ headBranch }, packageConfig);
         }
         return packageConfig;
     }
 
     async function createUpdateCommits(packageConfigPromise) {
         const packageConfig = await packageConfigPromise;
-        for (let update of packageConfig.updates) {
+        for (let { type, name, current, latest } of packageConfig.updates) {
             const newManifest = Object.assign({}, packageConfig.manifest);
-            newManifest[update.type][update.name] = update.latest;
+            newManifest[type][name] = `${getSavePrefix(current)}${latest}`;
 
             const dir = dirname(packageConfig.manifestPath);
             const { tree } = await client.gitdata.getTree({
@@ -200,7 +198,7 @@ async function main({ auth, user, repo }) {
                 user,
                 repo,
                 path: packageConfig.manifestPath,
-                message: `chore: update "${update.name}" in "${update.type}"`,
+                message: `chore: update "${name}" in "${type}"`,
                 content: new Buffer(
                     JSON.stringify(newManifest, null, 2),
                 ).toString('base64'),
