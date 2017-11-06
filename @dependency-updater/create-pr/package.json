@@ -26,11 +26,14 @@
   },
   "babel": {
     "presets": [
-      ["env", {
-        "targets": {
-          "node": "6"
+      [
+        "env",
+        {
+          "targets": {
+            "node": "6"
+          }
         }
-      }]
+      ]
     ]
   },
   "repository": {
