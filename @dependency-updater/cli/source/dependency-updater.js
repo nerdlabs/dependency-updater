@@ -38,10 +38,9 @@ async function getPackageUpdates(packageConfigPromise) {
         fetchLatestVersions(dependencies, 'dependencies'),
         fetchLatestVersions(devDependencies, 'devDependencies'),
     ]);
-    const updates = [
-        ...latestDependencies,
-        ...latestDevDependencies,
-    ].filter(({ current, latest }) => needsUpdate(current, latest));
+    const updates = [...latestDependencies, ...latestDevDependencies].filter(
+        ({ current, latest }) => needsUpdate(current, latest),
+    );
     return Object.assign({ updates }, packageConfig);
 }
 
