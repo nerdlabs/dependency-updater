@@ -2888,7 +2888,7 @@ lcid@^1.0.0:
   dependencies:
     invert-kv "^1.0.0"
 
-lerna@^2.2.0:
+lerna@2.5.1:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/lerna/-/lerna-2.5.1.tgz#d07099bd3051ee799f98c753328bd69e96c6fab8"
   dependencies:
@@ -3753,9 +3753,9 @@ preserve@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/preserve/-/preserve-0.2.0.tgz#815ed1f6ebc65926f865b310c0713bcb3315ce4b"
 
-prettier@^1.7.0:
-  version "1.7.4"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-1.7.4.tgz#5e8624ae9363c80f95ec644584ecdf55d74f93fa"
+prettier@^1.8.1:
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-1.8.1.tgz#91064d778c08c85ac1cbe6b23195c34310d039f9"
 
 pretty-format@^21.2.1:
   version "21.2.1"
