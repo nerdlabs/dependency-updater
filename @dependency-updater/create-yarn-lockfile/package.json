@@ -1,0 +1,79 @@
+{
+  "name": "@dependency-updater/create-yarn-lockfile",
+  "version": "1.0.0",
+  "description": "Generate a yarn.lock lockfile based on a package.json manifest",
+  "main": "distribution/index.js",
+  "scripts": {
+    "clean": "rm -rf distribution",
+    "prebuild": "npm run clean",
+    "build": "babel source/ --out-dir distribution/",
+    "build:watch": "npm run build -- --watch",
+    "test": "ava",
+    "test:watch": "npm run test -- --watch"
+  },
+  "ava": {
+    "babel": "inherit",
+    "files": [
+      "source/**/*.spec.js"
+    ],
+    "require": [
+      "babel-register"
+    ],
+    "source": [
+      "source/**/*.js",
+      "!source/**/*.spec.js"
+    ]
+  },
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "6"
+          }
+        }
+      ]
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nerdlabs/dependency-updater.git"
+  },
+  "keywords": [
+    "yarn",
+    "lockfile",
+    "lock file",
+    "yarn.lock",
+    "package.json"
+  ],
+  "author": {
+    "name": "nerdlabs",
+    "email": "nerds@nerdlabs.it"
+  },
+  "contributors": [
+    {
+      "name": "Bjoern Brauer",
+      "email": "zaubernerd@nerdlabs.it"
+    },
+    {
+      "name": "Mario Nebl",
+      "email": "hello@herebecode.com"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nerdlabs/dependency-updater/issues"
+  },
+  "homepage": "https://github.com/nerdlabs/dependency-updater/tree/master/%40dependency-updater/create-yarn-lockfile#readme",
+  "devDependencies": {
+    "ava": "^0.22.0",
+    "babel-cli": "^6.14.0",
+    "babel-preset-env": "^1.6.0",
+    "babel-register": "^6.26.0"
+  },
+  "dependencies": {
+    "@yarnpkg/lockfile": "^1.0.0",
+    "package-json": "^4.0.1"
+  }
+}
