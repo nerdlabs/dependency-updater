@@ -64,7 +64,7 @@
   },
   "homepage": "https://github.com/nerdlabs/dependency-updater/tree/master/%40dependency-updater/get-file#readme",
   "devDependencies": {
-    "ava": "0.16.0",
+    "ava": "0.23.0",
     "babel-cli": "^6.14.0",
     "babel-preset-env": "^1.6.0",
     "babel-register": "^6.14.0",
